@@ -19,6 +19,12 @@ type MinimalGRPCServer struct {
 	serviceRegistrationFuncs []func(*grpc.Server)
 }
 
+// Creates a minimal gRPC server but doesn't start it
+// The service registration funcs will be applied, in order, to register services with the underlying gRPC server object
+func NewMinimalGRPCServer(listenPort uint32, listenProtocol string, stopGracePeriod time.Duration, serviceRegistrationFuncs []func(*grpc.Server)) *MinimalGRPCServer {
+	return &MinimalGRPCServer{listenPort: listenPort, listenProtocol: listenProtocol, stopGracePeriod: stopGracePeriod, serviceRegistrationFuncs: serviceRegistrationFuncs}
+}
+
 func (server MinimalGRPCServer) Run() error {
 	grpcServer := grpc.NewServer()
 
