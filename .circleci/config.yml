@@ -6,6 +6,11 @@ orbs:
     jobs:
       check_docs:
         executor: cimg/node:15.3.0
+        parameters:
+          markdown_link_check_config_json:
+            default: "{}"
+            description: Config JSON passed to markdown-link-check package (see https://www.npmjs.com/package/markdown-link-check for full details)
+            type: string
         steps:
           - checkout
 
@@ -23,24 +28,7 @@ orbs:
               command: |
                 sudo npm install -g markdown-link-check
                 config_filepath="$(mktemp)"
-                cat << EOF > "${config_filepath}"
-                {
-                    "replacementPatterns": [
-                        {
-                            "pattern": "^../kurtosis-core",
-                            "replacement": "https://docs.kurtosistech.com/kurtosis-core"
-                        },
-                        {
-                            "pattern": "^../kurtosis-libs",
-                            "replacement": "https://docs.kurtosistech.com/kurtosis-libs"
-                        },
-                        {
-                            "pattern": "^../kurtosis-testsuite-api-lib",
-                            "replacement": "https://docs.kurtosistech.com/kurtosis-testsuite-api-lib"
-                        }
-                    ]
-                }
-                EOF
+                echo "<<parameters.markdown_link_check_config_json>>" > "${config_filepath}"
 
                 has_no_errors=true
                 # Inspired by https://github.com/open-telemetry/opentelemetry-collector/pull/1156/files/2244e61f4dd0378deffc00d939edf6f800687dcf
@@ -104,6 +92,23 @@ workflows:
     jobs:
       # -- PR check jobs ------------------------------------------
       - kurtosis-docs-checker/check_docs:
+          markdown_link_check_config_json: |
+            {
+                "replacementPatterns": [
+                    {
+                        "pattern": "^../kurtosis-core",
+                        "replacement": "https://docs.kurtosistech.com/kurtosis-core"
+                    },
+                    {
+                        "pattern": "^../kurtosis-libs",
+                        "replacement": "https://docs.kurtosistech.com/kurtosis-libs"
+                    },
+                    {
+                        "pattern": "^../kurtosis-testsuite-api-lib",
+                        "replacement": "https://docs.kurtosistech.com/kurtosis-testsuite-api-lib"
+                    }
+                ]
+            }
           filters:
             branches:
               ignore:
