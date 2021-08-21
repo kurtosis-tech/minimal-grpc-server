@@ -31,6 +31,9 @@ orbs:
                 sudo npm install -g markdown-link-check
                 config_filepath="$(mktemp)"
                 echo "<<parameters.markdown_link_check_config_json>>" > "${config_filepath}"
+                
+                # TODO DEBUGGING
+                cat "${config_filepath}"
 
                 has_no_errors=true
                 # Inspired by https://github.com/open-telemetry/opentelemetry-collector/pull/1156/files/2244e61f4dd0378deffc00d939edf6f800687dcf
