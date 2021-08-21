@@ -1,3 +1,3 @@
 Minimal gRPC Server
 ===================
-This library wraps Google's gRPC server in Golang to make running the server synchronous, with a stop instruction sent to the server by receiving a signal (e.g. SIGTERM, SIGQUIT).
+This repo provides libraries that run a Google gRPC server synchronously, which will exit upon receiving SIGTERM, SIGQUIT, or SIGINT.
