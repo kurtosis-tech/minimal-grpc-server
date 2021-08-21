@@ -11,9 +11,7 @@ orbs:
         parameters:
           markdown_link_check_config_json:
             default: "{}"
-            description: |
-              Config JSON passed to markdown-link-check package (see https://www.npmjs.com/package/markdown-link-check for full details)
-              NOTE: Double quotes will need to be escaped, e.g. {\"myThing\": \"Something\"}
+            description: Config JSON passed to markdown-link-check package (see https://www.npmjs.com/package/markdown-link-check for full details)
             type: string
         steps:
           - checkout
@@ -35,9 +33,6 @@ orbs:
                 cat \<< EOF > "${config_filepath}"
                 <<parameters.markdown_link_check_config_json>>
                 EOF
-                
-                # TODO DEBUGGING
-                cat "${config_filepath}"
 
                 has_no_errors=true
                 # Inspired by https://github.com/open-telemetry/opentelemetry-collector/pull/1156/files/2244e61f4dd0378deffc00d939edf6f800687dcf
