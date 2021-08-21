@@ -55,7 +55,7 @@ workflows:
   build:
     jobs:
       # -- PR check jobs ------------------------------------------
-      - kurtosis-docs-checker/check_docs:
+      - kurtosis-docs-checker/check-docs:
           markdown-link-check-config-json: |
             {
                 "replacementPatterns": [
