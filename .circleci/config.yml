@@ -6,7 +6,7 @@ orbs:
     jobs:
       check_docs:
         executor: cimg/node:15.3.0
-        step:
+        steps:
           - checkout
 
           # Gotchas I discovered when writing this:
