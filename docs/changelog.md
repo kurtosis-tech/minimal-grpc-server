@@ -1,4 +1,6 @@
 # TBD
+
+# 0.2.1
 ### Features
 * Added CircleCI checks
 
