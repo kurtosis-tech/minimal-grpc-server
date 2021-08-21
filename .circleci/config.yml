@@ -32,7 +32,9 @@ orbs:
               command: |
                 sudo npm install -g markdown-link-check
                 config_filepath="$(mktemp)"
-                echo "<<parameters.markdown_link_check_config_json>>" > "${config_filepath}"
+                cat \<< EOF > "${config_filepath}"
+                <<parameters.markdown_link_check_config_json>>
+                EOF
                 
                 # TODO DEBUGGING
                 cat "${config_filepath}"
@@ -101,18 +103,18 @@ workflows:
       - kurtosis-docs-checker/check_docs:
           markdown_link_check_config_json: |
             {
-                \"replacementPatterns\": [
+                "replacementPatterns": [
                     {
-                        \"pattern\": \"^../kurtosis-core\",
-                        \"replacement\": \"https://docs.kurtosistech.com/kurtosis-core\"
+                        "pattern": "^../kurtosis-core",
+                        "replacement": "https://docs.kurtosistech.com/kurtosis-core"
                     },
                     {
-                        \"pattern\": \"^../kurtosis-libs\",
-                        \"replacement\": \"https://docs.kurtosistech.com/kurtosis-libs\"
+                        "pattern": "^../kurtosis-libs",
+                        "replacement": "https://docs.kurtosistech.com/kurtosis-libs"
                     },
                     {
-                        \"pattern\": \"^../kurtosis-testsuite-api-lib\",
-                        \"replacement\": \"https://docs.kurtosistech.com/kurtosis-testsuite-api-lib\"
+                        "pattern": "^../kurtosis-testsuite-api-lib",
+                        "replacement": "https://docs.kurtosistech.com/kurtosis-testsuite-api-lib"
                     }
                 ]
             }
