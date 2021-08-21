@@ -5,7 +5,9 @@ orbs:
   kurtosis-docs-checker:
     jobs:
       check_docs:
-        executor: cimg/node:15.3.0
+        docker:
+          - image: cimg/node:15.3.0
+        resource_class: small
         parameters:
           markdown_link_check_config_json:
             default: "{}"
