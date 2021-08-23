@@ -1,5 +1,9 @@
 # TBD
 
+# 0.3.1
+### Fixes
+* Export `TypedServerOverride`
+
 # 0.3.0
 ### Fixes
 * Added a workaround for gRPC's stupid "unimplemented server" requirement, which messes everything up in Typescript

@@ -1,1 +1,1 @@
-export { KnownKeysOnly, MinimalGRPCServer } from './server';
+export { KnownKeysOnly, MinimalGRPCServer, TypedServerOverride } from './server';
