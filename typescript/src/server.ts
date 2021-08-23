@@ -7,6 +7,25 @@ const INTERRUPT_SIGNAL: string = "SIGNINT";
 const QUIT_SIGNAL: string = "SIGQUIT";
 const TERM_SIGNAL: string = "SIGTERM";
 
+// ====================================== NOTE ========================================================= 
+// All this rigamarole is necessary due to gRPC's stupid "unimplemented server" requirements
+// See:
+// - https://github.com/agreatfool/grpc_tools_node_protoc_ts/issues/79
+// - https://github.com/agreatfool/grpc_tools_node_protoc_ts/blob/master/doc/server_impl_signature.md
+//
+// ====================================== NOTE =========================================================
+type KnownKeys<T> = {
+    [K in keyof T]: string extends K ? never : number extends K ? never : K
+} extends { [_ in keyof T]: infer U } ? U : never;
+
+export type KnownKeysOnly<T extends Record<any, any>> = Pick<T, KnownKeys<T>>;
+
+class TypedServerOverride extends grpc.Server {
+    addTypedService<TypedServiceImplementation extends Record<any,any>>(service: grpc.ServiceDefinition, implementation: TypedServiceImplementation): void {
+        this.addService(service, implementation);
+    }
+}
+
 export class MinimalGRPCServer {
     private readonly listenPort: number;
     private readonly stopGracePeriodSeconds: number;    // How long we'll give the server to stop after asking nicely before we kill it
@@ -17,7 +36,9 @@ export class MinimalGRPCServer {
     constructor(
         listenPort: number,
         stopGracePeriodSeconds: number,
-        serviceRegistrationFuncs: { (server: grpc.Server): void; }[]
+        // NOTE: Users wanting to register services declared with class style should use server.addTypedService,
+        //  and pass in a class that implements KnownKeysOnly<IYourServiceServer>
+        serviceRegistrationFuncs: { (server: TypedServerOverride): void; }[]
     ) {
         this.listenPort = listenPort;
         this.stopGracePeriodSeconds = stopGracePeriodSeconds;
@@ -25,7 +46,7 @@ export class MinimalGRPCServer {
     }
 
     async run(): Promise<Result<null, Error>> {
-        const grpcServer: grpc.Server = new grpc.Server();
+        const grpcServer: grpc.Server = new TypedServerOverride();
 
         for (let registrationFunc of this.serviceRegistrationFuncs) {
             registrationFunc(grpcServer);
