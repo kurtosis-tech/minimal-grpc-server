@@ -1,4 +1,6 @@
 # TBD
+
+# 0.2.2
 ### Changes
 * Switch to using productized docs-checker orb
 
