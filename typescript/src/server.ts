@@ -62,7 +62,7 @@ export class MinimalGRPCServer {
                 () => {
                     resolve(err(new Error("gRPC server failed to stop gracefully after waiting for " + this.stopGracePeriodSeconds + "s")));
                 },
-                this.stopGracePeriodSeconds * MILLIS_IN_SECOND
+                this.stopGracePeriodSeconds * MILLIS_IN_SECOND;
             );
         })
         const gracefulShutdownResult: Result<null, Error> = await Promise.race([tryShutdownPromise, timeoutPromise]);
