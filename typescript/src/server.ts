@@ -9,7 +9,6 @@ const TERM_SIGNAL: string = "SIGTERM";
 
 export class MinimalGRPCServer {
     private readonly listenPort: number;
-    private readonly listenProtocol: string;
     private readonly stopGracePeriodSeconds: number;    // How long we'll give the server to stop after asking nicely before we kill it
     private readonly serviceRegistrationFuncs: { (server: grpc.Server): void; }[]
 
@@ -17,12 +16,10 @@ export class MinimalGRPCServer {
     // The service registration funcs will be applied, in order, to register services with the underlying gRPC server object
     constructor(
         listenPort: number,
-        listenProtocol: string,
         stopGracePeriodSeconds: number,
         serviceRegistrationFuncs: { (server: grpc.Server): void; }[]
     ) {
         this.listenPort = listenPort;
-        this.listenProtocol = listenProtocol;
         this.stopGracePeriodSeconds = stopGracePeriodSeconds;
         this.serviceRegistrationFuncs = serviceRegistrationFuncs;
     }
