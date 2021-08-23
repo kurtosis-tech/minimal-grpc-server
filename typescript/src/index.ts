@@ -1,1 +1,1 @@
-// TODO Add exports here
+export { MinimalGRPCServer } from './server';

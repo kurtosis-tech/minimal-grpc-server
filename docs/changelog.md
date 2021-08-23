@@ -1,4 +1,6 @@
 # TBD
+### Features
+* Added a Typescript version
 
 # 0.2.1
 ### Features
