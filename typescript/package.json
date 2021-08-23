@@ -1,0 +1,43 @@
+{
+    "name": "minimal-grpc-server",
+    "version": "0.2.2",
+    "description": "This repo contains a tiny Typescript library wrapped around Google's gRPC server, to make starting a gRPC server much simpler.",
+    "main": "./build/index",
+    "types": "./build/index",
+    "scripts": {
+        "build": "tsc",
+        "test": "ts-mocha -p tsconfig.json 'test/**/*.ts'"
+    },
+    "files": [
+        "build"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/kurtosis-tech/minimal-grpc-server.git"
+    },
+    "keywords": [
+        "minimal",
+        "grpc",
+        "server"
+    ],
+    "author": "Kurtosis Technologies Inc <accounts@kurtosistech.com> (https://www.kurtosistech.com/)",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/kurtosis-tech/minimal-grpc-server/issues"
+    },
+    "homepage": "https://github.com/kurtosis-tech/minimal-grpc-server",
+    "engines": {
+        "node": "= 14.17.1"
+    },
+    "dependencies": {
+        "grpc": "^1.24.11",
+        "loglevel": "^1.7.1",
+        "neverthrow": "^4.2.2"
+    },
+    "devDependencies": {
+        "chai": "^4.3.4",
+        "mocha": "^9.1.0",
+        "ts-mocha": "^8.0.0",
+        "typescript": "^4.3.5"
+    }
+}

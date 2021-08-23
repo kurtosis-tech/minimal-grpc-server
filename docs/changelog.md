@@ -1,5 +1,12 @@
 # TBD
 
+# 0.2.2
+### Changes
+* Switch to using productized docs-checker orb
+
+### Features
+* Added a Typescript version
+
 # 0.2.1
 ### Features
 * Added CircleCI checks

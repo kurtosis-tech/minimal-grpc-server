@@ -1,0 +1,1 @@
+export { MinimalGRPCServer } from './server';
