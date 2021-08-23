@@ -1,4 +1,10 @@
 # TBD
+### Fixes
+* Added a workaround for gRPC's stupid "unimplemented server" requirement, which messes everything up in Typescript
+
+### Breaking Changes
+* The Typescript `MinimalGRPCServer` now takes in service registration functions that accept `TypedServerOverride` rather than `grpc.Server`
+    * Users should make their server implementation class implement `KnownKeysOnly<ITheUserServiceServer>` rather than `ITheUserServiceServer`, and in their registration functions call `typedServerOverride.addTypedService` instead of `.addService`
 
 # 0.2.2
 ### Changes

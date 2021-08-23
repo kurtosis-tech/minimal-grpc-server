@@ -1,1 +1,1 @@
-export { MinimalGRPCServer } from './server';
+export { KnownKeysOnly, MinimalGRPCServer } from './server';
