@@ -1,4 +1,6 @@
 # TBD
+### Fixes
+* Export `TypedServerOverride`
 
 # 0.3.0
 ### Fixes

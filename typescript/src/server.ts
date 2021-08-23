@@ -20,7 +20,7 @@ type KnownKeys<T> = {
 
 export type KnownKeysOnly<T extends Record<any, any>> = Pick<T, KnownKeys<T>>;
 
-class TypedServerOverride extends grpc.Server {
+export class TypedServerOverride extends grpc.Server {
     addTypedService<TypedServiceImplementation extends Record<any,any>>(service: grpc.ServiceDefinition, implementation: TypedServiceImplementation): void {
         this.addService(service, implementation);
     }
