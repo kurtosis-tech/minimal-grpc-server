@@ -1,5 +1,9 @@
 # TBD
 
+# 0.3.3
+### Fixes
+* Unpin Node engine, using `>=14.17.0` now
+
 # 0.3.2
 ### Features
 * Enabled Typescript strict mode for safer code
