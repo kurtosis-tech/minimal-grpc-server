@@ -1,4 +1,6 @@
 # TBD
+### Fixes
+* Unpin Node engine, using `>=14.17.0` now
 
 # 0.3.2
 ### Features
