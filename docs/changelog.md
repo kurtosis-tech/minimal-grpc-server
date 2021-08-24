@@ -1,4 +1,9 @@
 # TBD
+### Features
+* Enabled Typescript strict mode for safer code
+
+### Fixes
+* Fixed bugs that popped out when strict mode was enabled
 
 # 0.3.1
 ### Fixes

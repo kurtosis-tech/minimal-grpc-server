@@ -29,7 +29,7 @@ export class TypedServerOverride extends grpc.Server {
 export class MinimalGRPCServer {
     private readonly listenPort: number;
     private readonly stopGracePeriodSeconds: number;    // How long we'll give the server to stop after asking nicely before we kill it
-    private readonly serviceRegistrationFuncs: { (server: grpc.Server): void; }[]
+    private readonly serviceRegistrationFuncs: { (server: TypedServerOverride): void; }[]
 
     // Creates a minimal gRPC server but doesn't start it
     // The service registration funcs will be applied, in order, to register services with the underlying gRPC server object
@@ -46,7 +46,7 @@ export class MinimalGRPCServer {
     }
 
     async run(): Promise<Result<null, Error>> {
-        const grpcServer: grpc.Server = new TypedServerOverride();
+        const grpcServer: TypedServerOverride = new TypedServerOverride();
 
         for (let registrationFunc of this.serviceRegistrationFuncs) {
             registrationFunc(grpcServer);
