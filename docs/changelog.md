@@ -1,4 +1,6 @@
 # TBD
+### Fixes
+* Fixed a bug where the bind required `127.0.0.1` specified
 
 # 0.3.4
 ### Fixes
