@@ -1,4 +1,6 @@
 # TBD
+
+# 0.3.4
 ### Fixes
 * Fixed a bug in the way we created the insecure server credentials
 
