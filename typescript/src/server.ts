@@ -2,6 +2,7 @@ import * as grpc from 'grpc';
 import * as log from 'loglevel';
 import { Result, ok, err } from 'neverthrow';
 
+const LOCALHOST_IP: string = "127.0.0.1";
 const MILLIS_IN_SECOND: number = 1000;
 const INTERRUPT_SIGNAL: string = "SIGNINT";
 const QUIT_SIGNAL: string = "SIGQUIT";
@@ -52,7 +53,7 @@ export class MinimalGRPCServer {
             registrationFunc(grpcServer);
         }
 
-        const listenUrl: string = ":" + this.listenPort;
+        const listenUrl: string = LOCALHOST_IP + ":" + this.listenPort;
         const boundPort: number = grpcServer.bind(listenUrl, grpc.ServerCredentials.createInsecure());
         if (boundPort === 0) {
             return err(new Error("An error occurred binding the server to listen URL '"+ boundPort +"'"));

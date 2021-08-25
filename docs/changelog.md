@@ -1,5 +1,9 @@
 # TBD
 
+# 0.3.5
+### Fixes
+* Fixed a bug where the bind required `127.0.0.1` specified
+
 # 0.3.4
 ### Fixes
 * Fixed a bug in the way we created the insecure server credentials
