@@ -53,7 +53,7 @@ export class MinimalGRPCServer {
         }
 
         const listenUrl: string = ":" + this.listenPort;
-        const boundPort: number = grpcServer.bind(listenUrl, grpc.credentials.createInsecure());
+        const boundPort: number = grpcServer.bind(listenUrl, grpc.ServerCredentials.createInsecure());
         if (boundPort === 0) {
             return err(new Error("An error occurred binding the server to listen URL '"+ boundPort +"'"));
         }

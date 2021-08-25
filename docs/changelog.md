@@ -1,5 +1,9 @@
 # TBD
 
+# 0.3.4
+### Fixes
+* Fixed a bug in the way we created the insecure server credentials
+
 # 0.3.3
 ### Fixes
 * Unpin Node engine, using `>=14.17.0` now
