@@ -1,5 +1,9 @@
 # TBD
 
+# 0.3.6
+### Fixes
+* Fixed a bug where the gRPC server was binding on the incorrect IP
+
 # 0.3.5
 ### Fixes
 * Fixed a bug where the bind required `127.0.0.1` specified
