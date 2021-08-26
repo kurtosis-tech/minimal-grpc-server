@@ -1,4 +1,6 @@
 # TBD
+### Fixes
+* Fixed a bug where the gRPC server was binding on the incorrect IP
 
 # 0.3.5
 ### Fixes
