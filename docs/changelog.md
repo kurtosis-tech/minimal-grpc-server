@@ -1,4 +1,6 @@
 # TBD
+### Features
+* Added logging to all gRPC requests when debug mode is enabled
 
 # 0.3.6
 ### Fixes
