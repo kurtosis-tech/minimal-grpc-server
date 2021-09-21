@@ -29,12 +29,12 @@ func NewMinimalGRPCServer(listenPort uint32, listenProtocol string, stopGracePer
 func (server MinimalGRPCServer) Run() error {
 	loggingInterceptorFunc := func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		grpcMethod := info.FullMethod
-		logrus.Debugf("Received gRPC request to method '%v' with args: %+v", grpcMethod, req)
+		logrus.Debugf("Received gRPC request to method '%v' with args:\n%+v", grpcMethod, req)
 		resp, err := handler(ctx, req)
 		if err != nil {
-			logrus.Debugf("gRPC request to method '%v' failed with error: %v", grpcMethod, err)
+			logrus.Debugf("gRPC request to method '%v' failed with error:\n%v", grpcMethod, err)
 		} else {
-			logrus.Debugf("gRPC request to method '%v' succeeded with response: %+v", grpcMethod, resp)
+			logrus.Debugf("gRPC request to method '%v' succeeded with response:\n%+v", grpcMethod, resp)
 		}
 		return resp, err
 	}

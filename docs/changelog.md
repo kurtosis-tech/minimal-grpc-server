@@ -1,6 +1,7 @@
 # TBD
 ### Features
-* Added logging to all gRPC requests when debug mode is enabled
+* Added logging to all requests made to users of the Go version of this library
+    * **NOTE:** This is NOT enabled for Typescript because server-side interceptors aren't supported unfortunately: https://github.com/grpc/grpc-node/issues/419
 
 # 0.3.6
 ### Fixes
