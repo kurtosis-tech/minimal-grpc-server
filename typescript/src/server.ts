@@ -47,6 +47,9 @@ export class MinimalGRPCServer {
     }
 
     async run(): Promise<Result<null, Error>> {
+        // NOTE: This is where we'd want to add server call interceptors to log the request & response...
+        // ...but they're not supported: https://github.com/grpc/grpc-node/issues/419
+        // As of 2021-09-20, this is a difference from the Go version!
         const grpcServer: TypedServerOverride = new TypedServerOverride();
 
         for (let registrationFunc of this.serviceRegistrationFuncs) {
