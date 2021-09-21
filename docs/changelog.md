@@ -1,4 +1,6 @@
 # TBD
+
+# 0.3.7
 ### Features
 * Added logging to all requests made to users of the Go version of this library
     * **NOTE:** This is NOT enabled for Typescript because server-side interceptors aren't supported unfortunately: https://github.com/grpc/grpc-node/issues/419
