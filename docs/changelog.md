@@ -1,4 +1,6 @@
 # TBD
+
+# 0.3.8
 ### Fixes
 * `stacktrace.Propagate` panics when receiving a `nil` cause
 
