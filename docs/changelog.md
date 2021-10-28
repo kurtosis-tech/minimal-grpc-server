@@ -1,5 +1,9 @@
 # TBD
 
+# 0.3.8
+### Fixes
+* `stacktrace.Propagate` panics when receiving a `nil` cause
+
 # 0.3.7
 ### Features
 * Added logging to all requests made to users of the Go version of this library
