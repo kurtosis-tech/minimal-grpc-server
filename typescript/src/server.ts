@@ -1,6 +1,7 @@
 import * as grpc from 'grpc';
 import * as log from 'loglevel';
 import { Result, ok, err } from 'neverthrow';
+import { setTimeout } from "timers/promises";
 
 const BIND_IP: string = "0.0.0.0";
 const MILLIS_IN_SECOND: number = 1000;
@@ -47,7 +48,7 @@ export class MinimalGRPCServer {
     }
 
     // Runs the server synchronously until an interrupt signal is received
-    async run(): Promise<Result<null, Error>> {
+    public async runUntilInterrupted(): Promise<Result<null, Error>> {
         // Signals are used to interrupt the server, so we catch them here
         const signalsToHandle: Array<string> = [INTERRUPT_SIGNAL, QUIT_SIGNAL, TERM_SIGNAL];
         const signalReceivedPromises: Array<Promise<null>> = signalsToHandle.map((signal) => {
@@ -58,7 +59,7 @@ export class MinimalGRPCServer {
             });
         });
         const anySignalReceivedPromise: Promise<null> = Promise.race(signalReceivedPromises);
-        const runResult: Result<null, Error> = await this.runWithManualShutdown(anySignalReceivedPromise);
+        const runResult: Result<null, Error> = await this.runUntilStopped(anySignalReceivedPromise);
         if (runResult.isErr()) {
             return err(runResult.error);
         }
@@ -66,7 +67,7 @@ export class MinimalGRPCServer {
     }
 
     // Runs the server synchronously until the given promise is resolved
-    async runWithManualShutdown(stopper: Promise<null>): Promise<Result<null, Error>> {
+    public async runUntilStopped(stopper: Promise<null>): Promise<Result<null, Error>> {
         // NOTE: This is where we'd want to add server call interceptors to log the request & response...
         // ...but they're not supported: https://github.com/grpc/grpc-node/issues/419
         // As of 2021-09-20, this is a difference from the Go version!
@@ -91,23 +92,25 @@ export class MinimalGRPCServer {
                 resolve(ok(null));
             })
         })
-        const timeoutPromise: Promise<Result<null, Error>> = new Promise((resolve, _unusedReject) => {
-            setTimeout(
-                () => {
-                    resolve(err(new Error("gRPC server failed to stop gracefully after waiting for " + this.stopGracePeriodSeconds + "s")));
-                },
-                this.stopGracePeriodSeconds * MILLIS_IN_SECOND
-            );
-        });
+        const timeoutAbortController: AbortController = new AbortController();
+        const timeoutPromise: Promise<Result<null, Error>> = setTimeout(
+            this.stopGracePeriodSeconds * MILLIS_IN_SECOND,
+            err(new Error("gRPC server failed to stop gracefully after waiting for " + this.stopGracePeriodSeconds + "s")),
+            {
+                signal: timeoutAbortController.signal,
+            },
+        );
         const gracefulShutdownResult: Result<null, Error> = await Promise.race([tryShutdownPromise, timeoutPromise]);
-        if (gracefulShutdownResult.isErr()) {
+        if (gracefulShutdownResult.isOk()) {
             log.debug("gRPC server has exited gracefully");
         } else {
             log.warn("gRPC server failed to stop gracefully after " + this.stopGracePeriodSeconds + "s; hard-stopping now...");
             grpcServer.forceShutdown();
             log.debug("gRPC server was forcefully stopped");
         }
-
+        // If the timeout is still running (i.e. in the event of a successful shutdown), kill the timeout thread
+        //  so that the Node engine doesn't block
+        timeoutAbortController.abort();
         return ok(null);
     }
 }

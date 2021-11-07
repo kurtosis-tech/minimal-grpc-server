@@ -14,7 +14,7 @@ import (
 )
 
 type MinimalGRPCServer struct {
-	listenPort uint32
+	listenPort uint16
 	listenProtocol string
 	stopGracePeriod time.Duration  // How long we'll give the server to stop after asking nicely before we kill it
 	serviceRegistrationFuncs []func(*grpc.Server)
@@ -22,12 +22,12 @@ type MinimalGRPCServer struct {
 
 // Creates a minimal gRPC server but doesn't start it
 // The service registration funcs will be applied, in order, to register services with the underlying gRPC server object
-func NewMinimalGRPCServer(listenPort uint32, listenProtocol string, stopGracePeriod time.Duration, serviceRegistrationFuncs []func(*grpc.Server)) *MinimalGRPCServer {
+func NewMinimalGRPCServer(listenPort uint16, listenProtocol string, stopGracePeriod time.Duration, serviceRegistrationFuncs []func(*grpc.Server)) *MinimalGRPCServer {
 	return &MinimalGRPCServer{listenPort: listenPort, listenProtocol: listenProtocol, stopGracePeriod: stopGracePeriod, serviceRegistrationFuncs: serviceRegistrationFuncs}
 }
 
 // Runs the server synchronously until an interrupt signal is received
-func (server MinimalGRPCServer) Run() error {
+func (server MinimalGRPCServer) RunUntilInterrupted() error {
 	// Signals are used to interrupt the server, so we catch them here
 	termSignalChan := make(chan os.Signal, 1)
 	signal.Notify(termSignalChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
@@ -36,14 +36,14 @@ func (server MinimalGRPCServer) Run() error {
 		interruptSignal := <- termSignalChan
 		serverStopChan <- interruptSignal
 	}()
-	if err := server.RunWithManualShutdown(serverStopChan); err != nil {
+	if err := server.RunUntilStopped(serverStopChan); err != nil {
 		return stacktrace.Propagate(err, "An error occurred running the server using the interrupt channel for stopping")
 	}
 	return nil
 }
 
 // Runs the server synchronously until a signal is received on the given channel
-func (server MinimalGRPCServer) RunWithManualShutdown(stopper chan interface{}) error {
+func (server MinimalGRPCServer) RunUntilStopped(stopper chan interface{}) error {
 	loggingInterceptorFunc := func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		grpcMethod := info.FullMethod
 		logrus.Debugf("Received gRPC request to method '%v' with args:\n%+v", grpcMethod, req)
