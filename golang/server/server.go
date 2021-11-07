@@ -26,7 +26,24 @@ func NewMinimalGRPCServer(listenPort uint32, listenProtocol string, stopGracePer
 	return &MinimalGRPCServer{listenPort: listenPort, listenProtocol: listenProtocol, stopGracePeriod: stopGracePeriod, serviceRegistrationFuncs: serviceRegistrationFuncs}
 }
 
+// Runs the server synchronously until an interrupt signal is received
 func (server MinimalGRPCServer) Run() error {
+	// Signals are used to interrupt the server, so we catch them here
+	termSignalChan := make(chan os.Signal, 1)
+	signal.Notify(termSignalChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+	serverStopChan := make(chan interface{}, 1)
+	go func() {
+		interruptSignal := <- termSignalChan
+		serverStopChan <- interruptSignal
+	}()
+	if err := server.RunWithManualShutdown(serverStopChan); err != nil {
+		return stacktrace.Propagate(err, "An error occurred running the server using the interrupt channel for stopping")
+	}
+	return nil
+}
+
+// Runs the server synchronously until a signal is received on the given channel
+func (server MinimalGRPCServer) RunWithManualShutdown(stopper chan interface{}) error {
 	loggingInterceptorFunc := func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		grpcMethod := info.FullMethod
 		logrus.Debugf("Received gRPC request to method '%v' with args:\n%+v", grpcMethod, req)
@@ -57,10 +74,6 @@ func (server MinimalGRPCServer) Run() error {
 		)
 	}
 
-	// Signals are used to interrupt the server, so we catch them here
-	termSignalChan := make(chan os.Signal, 1)
-	signal.Notify(termSignalChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
-
 	grpcServerResultChan := make(chan error)
 
 	go func() {
@@ -72,7 +85,7 @@ func (server MinimalGRPCServer) Run() error {
 	}()
 
 	// Wait until we get a shutdown signal
-	<- termSignalChan
+	<- stopper
 
 	serverStoppedChan := make(chan interface{})
 	go func() {

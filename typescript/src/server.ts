@@ -46,7 +46,27 @@ export class MinimalGRPCServer {
         this.serviceRegistrationFuncs = serviceRegistrationFuncs;
     }
 
+    // Runs the server synchronously until an interrupt signal is received
     async run(): Promise<Result<null, Error>> {
+        // Signals are used to interrupt the server, so we catch them here
+        const signalsToHandle: Array<string> = [INTERRUPT_SIGNAL, QUIT_SIGNAL, TERM_SIGNAL];
+        const signalReceivedPromises: Array<Promise<null>> = signalsToHandle.map((signal) => {
+            return new Promise((resolve, _unusedReject) => {
+                process.on(signal, () => {
+                    resolve(null);
+                });
+            });
+        });
+        const anySignalReceivedPromise: Promise<null> = Promise.race(signalReceivedPromises);
+        const runResult: Result<null, Error> = await this.runWithManualShutdown(anySignalReceivedPromise);
+        if (runResult.isErr()) {
+            return err(runResult.error);
+        }
+        return ok(null);
+    }
+
+    // Runs the server synchronously until the given promise is resolved
+    async runWithManualShutdown(stopper: Promise<null>): Promise<Result<null, Error>> {
         // NOTE: This is where we'd want to add server call interceptors to log the request & response...
         // ...but they're not supported: https://github.com/grpc/grpc-node/issues/419
         // As of 2021-09-20, this is a difference from the Go version!
@@ -62,20 +82,9 @@ export class MinimalGRPCServer {
             return err(new Error("An error occurred binding the server to listen URL '"+ boundPort +"'"));
         }
 
-        // Signals are used to interrupt the server, so we catch them here
-        const signalsToHandle: Array<string> = [INTERRUPT_SIGNAL, QUIT_SIGNAL, TERM_SIGNAL];
-        const signalReceivedPromises: Array<Promise<Result<null, Error>>> = signalsToHandle.map((signal) => {
-            return new Promise((resolve, _unusedReject) => {
-                process.on(signal, () => {
-                    resolve(ok(null));
-                });
-            });
-        });
-        const anySignalReceivedPromise: Promise<Result<null, Error>> = Promise.race(signalReceivedPromises);
-
         grpcServer.start();
 
-        await anySignalReceivedPromise;
+        await stopper;
 
         const tryShutdownPromise: Promise<Result<null, Error>> = new Promise((resolve, _unusedReject) => {
             grpcServer.tryShutdown(() => {
