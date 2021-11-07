@@ -1,5 +1,4 @@
-import assert from "assert";
-import { expect } from "chai";
+import { strict as assert } from "assert";
 import { Result } from 'neverthrow';
 import { MinimalGRPCServer, TypedServerOverride } from "../src/server";
 import { setTimeout } from "timers/promises";
@@ -12,14 +11,14 @@ describe(MinimalGRPCServer.name, function() {
         it('should start the server, let it run for a bit, then stop it without issue', async function() {
             const serviceRegistrationFuncs: { (server: TypedServerOverride): void; }[] = [];
             const server = new MinimalGRPCServer(LISTEN_PORT, STOP_GRACE_PERIOD_SECONDS, serviceRegistrationFuncs);
-
             var stopFunction;
             const stopPromise: Promise<null> = new Promise((resolve) => { stopFunction = resolve; })
+
             const serverResultPromise: Promise<Result<null, Error>> = server.runUntilStopped(stopPromise);
 
-            const firstTimeoutPromise: Promise<null> = setTimeout(1000, null);
+            const firstTimeoutPromise: Promise<null> = setTimeout(1000, undefined);
             const firstRaceResult: Result<null, Error> | undefined = await Promise.race([serverResultPromise, firstTimeoutPromise]);
-            expect(firstRaceResult).to.equal(undefined, `The server unexpectedly returned a result before we sent a signal to stop it:\n${firstRaceResult}`);
+            assert.equal(firstRaceResult, undefined, `The server unexpectedly returned a result before we sent a signal to stop it:\n${firstRaceResult}`);
             
             stopFunction();
 
