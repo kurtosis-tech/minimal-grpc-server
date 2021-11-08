@@ -1,5 +1,22 @@
 # TBD
 
+# 0.4.0
+### Features
+* Added a `runUntilStopped` method to the server, allowing the server to be stopped using an arbitrary event (rather than only interrupts)
+* Added `runUntilStopped` tests to Golang & Typescript
+
+### Changes
+* Renamed `run` to `runUntilInterrupted`
+
+### Fixes
+* Fixed a bug where even if the Typescript server shut down correctly, it would still wait for the hard stop timeout
+* Fixed a bug in the TS lib where the server would go through the hard stop flow if the server actually stopped correctly, and vice versa
+
+### Breaking Changes
+* Renamed `run` to `runUntilInterrupted`
+* The Golang library's listen port is now a `uint16`
+* The Typescript library now requires Node >= `16.13.0`
+
 # 0.3.8
 ### Fixes
 * `stacktrace.Propagate` panics when receiving a `nil` cause
