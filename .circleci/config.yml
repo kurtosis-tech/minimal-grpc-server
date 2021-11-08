@@ -35,7 +35,7 @@ jobs:
 
   check_typescript:
     docker:
-      - image: "cimg/go:<< pipeline.parameters.node-version>>"
+      - image: "cimg/node:<< pipeline.parameters.node-version>>"
     steps:
       - checkout
 
@@ -50,7 +50,7 @@ jobs:
 
   publish_typescript:
     docker:
-      - image: "cimg/go:<< pipeline.parameters.node-version>>"
+      - image: "cimg/node:<< pipeline.parameters.node-version>>"
     steps:
       - checkout
       - run: typescript/scripts/build.sh
