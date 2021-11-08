@@ -1,4 +1,6 @@
 # TBD
+
+# 0.4.0
 ### Features
 * Added a `runUntilStopped` method to the server, allowing the server to be stopped using an arbitrary event (rather than only interrupts)
 * Added `runUntilStopped` tests to Golang & Typescript
