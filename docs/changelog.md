@@ -1,4 +1,9 @@
 # TBD
+### Removals
+* Removed the "protocol" arg to the Go library, because gRPC can only run on TCP
+
+### Breaking Changes
+* `NewMinimalGRPCServer` constructors in the Go library no longer take in a protocol
 
 # 0.4.0
 ### Features
