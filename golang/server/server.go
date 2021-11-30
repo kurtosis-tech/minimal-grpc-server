@@ -13,17 +13,22 @@ import (
 	"time"
 )
 
+const (
+	// gRPC servers can ONLY run on TCP
+	// See https://stackoverflow.com/questions/65111895/using-udp-in-grpc
+	listenProtocol = "tcp"
+)
+
 type MinimalGRPCServer struct {
 	listenPort uint16
-	listenProtocol string
 	stopGracePeriod time.Duration  // How long we'll give the server to stop after asking nicely before we kill it
 	serviceRegistrationFuncs []func(*grpc.Server)
 }
 
 // Creates a minimal gRPC server but doesn't start it
 // The service registration funcs will be applied, in order, to register services with the underlying gRPC server object
-func NewMinimalGRPCServer(listenPort uint16, listenProtocol string, stopGracePeriod time.Duration, serviceRegistrationFuncs []func(*grpc.Server)) *MinimalGRPCServer {
-	return &MinimalGRPCServer{listenPort: listenPort, listenProtocol: listenProtocol, stopGracePeriod: stopGracePeriod, serviceRegistrationFuncs: serviceRegistrationFuncs}
+func NewMinimalGRPCServer(listenPort uint16, stopGracePeriod time.Duration, serviceRegistrationFuncs []func(*grpc.Server)) *MinimalGRPCServer {
+	return &MinimalGRPCServer{listenPort: listenPort, stopGracePeriod: stopGracePeriod, serviceRegistrationFuncs: serviceRegistrationFuncs}
 }
 
 // Runs the server synchronously until an interrupt signal is received
@@ -64,12 +69,12 @@ func (server MinimalGRPCServer) RunUntilStopped(stopper chan interface{}) error 
 	}
 
 	listenAddressStr := fmt.Sprintf(":%v", server.listenPort)
-	listener, err := net.Listen(server.listenProtocol, listenAddressStr)
+	listener, err := net.Listen(listenProtocol, listenAddressStr)
 	if err != nil {
 		return stacktrace.Propagate(
 			err,
 			"An error occurred creating the listener on %v/%v",
-			server.listenProtocol,
+			listenProtocol,
 			server.listenPort,
 		)
 	}
