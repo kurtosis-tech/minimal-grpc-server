@@ -1,4 +1,6 @@
 # TBD
+
+# 0.5.0
 ### Removals
 * Removed the "protocol" arg to the Go library, because gRPC can only run on TCP
 
