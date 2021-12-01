@@ -9,12 +9,11 @@ import (
 
 const (
 	listenPort = uint16(9003)
-	listenProtocol = "tcp"
 	stopGracePeriod = 10 * time.Second
 )
 
 func TestManualShutdown(t *testing.T) {
-	server := NewMinimalGRPCServer(listenPort, listenProtocol, stopGracePeriod, []func(*grpc.Server){})
+	server := NewMinimalGRPCServer(listenPort, stopGracePeriod, []func(*grpc.Server){})
 
 	stopChan := make(chan interface{})
 	runResultChan := make(chan error)

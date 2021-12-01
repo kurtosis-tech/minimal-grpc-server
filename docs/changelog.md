@@ -1,5 +1,12 @@
 # TBD
 
+# 0.5.0
+### Removals
+* Removed the "protocol" arg to the Go library, because gRPC can only run on TCP
+
+### Breaking Changes
+* `NewMinimalGRPCServer` constructors in the Go library no longer take in a protocol
+
 # 0.4.0
 ### Features
 * Added a `runUntilStopped` method to the server, allowing the server to be stopped using an arbitrary event (rather than only interrupts)
