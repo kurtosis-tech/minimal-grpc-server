@@ -1,4 +1,6 @@
 # TBD
+### Changes
+* Switched the Typescript library to use `@grpc/grpc-js` rather than the `grpc` package, as the `grpc` package is deprecated
 
 # 0.5.0
 ### Removals
