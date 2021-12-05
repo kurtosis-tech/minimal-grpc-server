@@ -1,5 +1,12 @@
 # TBD
 
+# 0.6.0
+### Changes
+* Switched the Typescript library to use `@grpc/grpc-js` rather than the `grpc` package, as the `grpc` package is deprecated
+
+### Breaking Changes
+* The service interfaces that are passed in to the server must be of type `@grpc/grpc-js` rather than `grpc`
+
 # 0.5.0
 ### Removals
 * Removed the "protocol" arg to the Go library, because gRPC can only run on TCP
