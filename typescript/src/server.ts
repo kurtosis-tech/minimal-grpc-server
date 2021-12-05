@@ -1,4 +1,4 @@
-import * as grpc from 'grpc';
+import * as grpc from '@grpc/grpc-js';
 import * as log from 'loglevel';
 import { Result, ok, err } from 'neverthrow';
 import { setTimeout } from "timers/promises";
@@ -78,11 +78,19 @@ export class MinimalGRPCServer {
         }
 
         const listenUrl: string = BIND_IP + ":" + this.listenPort;
-        const boundPort: number = grpcServer.bind(listenUrl, grpc.ServerCredentials.createInsecure());
-        if (boundPort === 0) {
-            return err(new Error("An error occurred binding the server to listen URL '"+ boundPort +"'"));
+        const bindPortPromise: Promise<Result<number, Error>> = new Promise((resolve) => {
+            grpcServer.bindAsync(listenUrl, grpc.ServerCredentials.createInsecure(), (error: Error | null, portNumber: number) => {
+                if (error === null) {
+                    resolve(ok(portNumber));
+                } else {
+                    resolve(err(error));
+                }
+            });
+        })
+        const bindPortResult = await bindPortPromise;
+        if (bindPortResult.isErr()) {
+            return err(bindPortResult.error);
         }
-
         grpcServer.start();
 
         await stopper;
