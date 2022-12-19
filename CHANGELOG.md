@@ -1,5 +1,3 @@
-# TBD
-
 # 0.6.1
 
 * Migrate repo to use internal tool `kudet` for release process
