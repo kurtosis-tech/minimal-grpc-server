@@ -79,6 +79,11 @@ workflows:
                         "pattern": "^../kurtosis-testsuite-api-lib",
                         "replacement": "https://docs.kurtosistech.com/kurtosis-testsuite-api-lib"
                     }
+                ],
+                "ignorePatterns": [
+                    {
+                        "pattern": "https://github.com/kurtosis-tech/minimal-grpc-server"
+                    }
                 ]
             }
           filters:
