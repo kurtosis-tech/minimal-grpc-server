@@ -2,7 +2,7 @@ version: 2.1
 
 orbs:
   npm-publisher: uraway/npm-publisher@0.2.0
-  kurtosis-docs-checker: kurtosis-tech/docs-checker@0.2.1
+  kurtosis-docs-checker: kurtosis-tech/docs-checker@0.2.3
 
 parameters:
   go-version:
@@ -63,6 +63,7 @@ workflows:
     jobs:
       # -- PR check jobs ------------------------------------------
       - kurtosis-docs-checker/check-docs:
+          should-check-changelog: false
           markdown-link-check-config-json: |
             {
                 "replacementPatterns": [
@@ -77,6 +78,11 @@ workflows:
                     {
                         "pattern": "^../kurtosis-testsuite-api-lib",
                         "replacement": "https://docs.kurtosistech.com/kurtosis-testsuite-api-lib"
+                    }
+                ],
+                "ignorePatterns": [
+                    {
+                        "pattern": "https://github.com/kurtosis-tech/minimal-grpc-server"
                     }
                 ]
             }
