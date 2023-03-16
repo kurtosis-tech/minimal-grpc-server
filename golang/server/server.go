@@ -2,10 +2,13 @@ package server
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"github.com/kurtosis-tech/stacktrace"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"net"
 	"os"
 	"os/signal"
@@ -23,15 +26,38 @@ type MinimalGRPCServer struct {
 	listenPort               uint16
 	stopGracePeriod          time.Duration // How long we'll give the server to stop after asking nicely before we kill it
 	serviceRegistrationFuncs []func(*grpc.Server)
+
+	// serverCert is optional. If present, server will run HTTPS
+	serverCert *tls.Certificate
+	// certPool is optional and should be present only if serverCert is present.
+	// If present, server will run two-way SSL
+	certPool *x509.CertPool
 }
 
-// Creates a minimal gRPC server but doesn't start it
+// NewMinimalGRPCServer Creates a minimal gRPC server but doesn't start it
 // The service registration funcs will be applied, in order, to register services with the underlying gRPC server object
 func NewMinimalGRPCServer(listenPort uint16, stopGracePeriod time.Duration, serviceRegistrationFuncs []func(*grpc.Server)) *MinimalGRPCServer {
-	return &MinimalGRPCServer{listenPort: listenPort, stopGracePeriod: stopGracePeriod, serviceRegistrationFuncs: serviceRegistrationFuncs}
+	return &MinimalGRPCServer{
+		listenPort:               listenPort,
+		stopGracePeriod:          stopGracePeriod,
+		serviceRegistrationFuncs: serviceRegistrationFuncs,
+		certPool:                 nil,
+		serverCert:               nil,
+	}
 }
 
-// Runs the server synchronously until an interrupt signal is received
+// NewMinimalHttpsGRPCServer is similar to NewMinimalGRPCServer but accepts SSL CA and certificate to enable HTTPS
+func NewMinimalHttpsGRPCServer(listenPort uint16, stopGracePeriod time.Duration, certPool *x509.CertPool, serverCert *tls.Certificate, serviceRegistrationFuncs []func(*grpc.Server)) *MinimalGRPCServer {
+	return &MinimalGRPCServer{
+		listenPort:               listenPort,
+		stopGracePeriod:          stopGracePeriod,
+		serviceRegistrationFuncs: serviceRegistrationFuncs,
+		certPool:                 certPool,
+		serverCert:               serverCert,
+	}
+}
+
+// RunUntilInterrupted runs the server synchronously until an interrupt signal is received
 func (server MinimalGRPCServer) RunUntilInterrupted() error {
 	// Signals are used to interrupt the server, so we catch them here
 	termSignalChan := make(chan os.Signal, 1)
@@ -48,7 +74,7 @@ func (server MinimalGRPCServer) RunUntilInterrupted() error {
 	return nil
 }
 
-// Runs the server synchronously until a signal is received on the given channel
+// RunUntilStopped runs the server synchronously until a signal is received on the given channel
 func (server MinimalGRPCServer) RunUntilStopped(stopper <-chan struct{}) error {
 	loggingInterceptorFunc := func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		grpcMethod := info.FullMethod
@@ -61,9 +87,16 @@ func (server MinimalGRPCServer) RunUntilStopped(stopper <-chan struct{}) error {
 		}
 		return resp, err
 	}
-	loggingInterceptor := grpc.UnaryInterceptor(loggingInterceptorFunc)
+	serverOptions := []grpc.ServerOption{
+		grpc.UnaryInterceptor(loggingInterceptorFunc),
+	}
 
-	grpcServer := grpc.NewServer(loggingInterceptor)
+	// Add TLS credentials to server options if certificate have been provided
+	tlsCredentialsMaybe := server.loadTlsCredentials()
+	if tlsCredentialsMaybe != nil {
+		serverOptions = append(serverOptions, grpc.Creds(tlsCredentialsMaybe))
+	}
+	grpcServer := grpc.NewServer(serverOptions...)
 
 	for _, registrationFunc := range server.serviceRegistrationFuncs {
 		registrationFunc(grpcServer)
@@ -112,4 +145,30 @@ func (server MinimalGRPCServer) RunUntilStopped(stopper <-chan struct{}) error {
 	}
 
 	return nil
+}
+
+func (server MinimalGRPCServer) loadTlsCredentials() credentials.TransportCredentials {
+	if server.serverCert == nil {
+		return nil
+	}
+	var tlsConfig *tls.Config
+	if server.certPool == nil {
+		// with no cert pool, 1 way SSL will be enabled, no need for CA
+		tlsConfig = &tls.Config{
+			Certificates: []tls.Certificate{
+				*server.serverCert,
+			},
+			ClientAuth: tls.NoClientCert,
+		}
+	} else {
+		// 2 ways SSL enabled - Load CA and set ClientAuth to "Require And Verify"
+		tlsConfig = &tls.Config{
+			Certificates: []tls.Certificate{
+				*server.serverCert,
+			},
+			ClientAuth: tls.RequireAndVerifyClientCert,
+			ClientCAs:  server.certPool,
+		}
+	}
+	return credentials.NewTLS(tlsConfig)
 }
