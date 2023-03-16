@@ -1,6 +1,6 @@
 {
     "name": "minimal-grpc-server",
-    "version": "0.6.2",
+    "version": "0.7.0",
     "description": "This repo contains a tiny Typescript library wrapped around Google's gRPC server, to make starting a gRPC server much simpler.",
     "main": "./build/index",
     "types": "./build/index",
