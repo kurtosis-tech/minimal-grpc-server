@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.7.0](https://github.com/kurtosis-tech/minimal-grpc-server/compare/0.6.2...0.7.0) (2023-03-16)
+
+
+### ⚠ BREAKING CHANGES
+
+* RunUntilStopped now accepts a chan <-struct{} instead of chan <-interface{} ([#33](https://github.com/kurtosis-tech/minimal-grpc-server/issues/33))
+
+### Code Refactoring
+
+* RunUntilStopped now accepts a chan &lt;-struct{} instead of chan <-interface{} ([#33](https://github.com/kurtosis-tech/minimal-grpc-server/issues/33)) ([1f3f722](https://github.com/kurtosis-tech/minimal-grpc-server/commit/1f3f72269eacff45582f24cef7524c582011d96a))
+
 ## [0.6.2](https://github.com/kurtosis-tech/minimal-grpc-server/compare/0.6.1...0.6.2) (2023-03-16)
 
 
