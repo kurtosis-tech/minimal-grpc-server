@@ -20,8 +20,8 @@ const (
 )
 
 type MinimalGRPCServer struct {
-	listenPort uint16
-	stopGracePeriod time.Duration  // How long we'll give the server to stop after asking nicely before we kill it
+	listenPort               uint16
+	stopGracePeriod          time.Duration // How long we'll give the server to stop after asking nicely before we kill it
 	serviceRegistrationFuncs []func(*grpc.Server)
 }
 
@@ -38,7 +38,7 @@ func (server MinimalGRPCServer) RunUntilInterrupted() error {
 	signal.Notify(termSignalChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	serverStopChan := make(chan interface{}, 1)
 	go func() {
-		interruptSignal := <- termSignalChan
+		interruptSignal := <-termSignalChan
 		serverStopChan <- interruptSignal
 	}()
 	if err := server.RunUntilStopped(serverStopChan); err != nil {
@@ -48,7 +48,7 @@ func (server MinimalGRPCServer) RunUntilInterrupted() error {
 }
 
 // Runs the server synchronously until a signal is received on the given channel
-func (server MinimalGRPCServer) RunUntilStopped(stopper chan interface{}) error {
+func (server MinimalGRPCServer) RunUntilStopped(stopper <-chan interface{}) error {
 	loggingInterceptorFunc := func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		grpcMethod := info.FullMethod
 		logrus.Debugf("Received gRPC request to method '%v' with args:\n%+v", grpcMethod, req)
@@ -90,7 +90,7 @@ func (server MinimalGRPCServer) RunUntilStopped(stopper chan interface{}) error 
 	}()
 
 	// Wait until we get a shutdown signal
-	<- stopper
+	<-stopper
 
 	serverStoppedChan := make(chan interface{})
 	go func() {
@@ -98,14 +98,14 @@ func (server MinimalGRPCServer) RunUntilStopped(stopper chan interface{}) error 
 		serverStoppedChan <- nil
 	}()
 	select {
-	case <- serverStoppedChan:
+	case <-serverStoppedChan:
 		logrus.Debug("gRPC server has exited gracefully")
-	case <- time.After(server.stopGracePeriod):
+	case <-time.After(server.stopGracePeriod):
 		logrus.Warnf("gRPC server failed to stop gracefully after %v; hard-stopping now...", server.stopGracePeriod)
 		grpcServer.Stop()
 		logrus.Debug("gRPC server was forcefully stopped")
 	}
-	if err := <- grpcServerResultChan; err != nil {
+	if err := <-grpcServerResultChan; err != nil {
 		// Technically this doesn't need to be an error, but we make it so to fail loudly
 		return stacktrace.Propagate(err, "gRPC server returned an error after it was done serving")
 	}
