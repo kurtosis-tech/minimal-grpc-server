@@ -36,9 +36,10 @@ func (server MinimalGRPCServer) RunUntilInterrupted() error {
 	// Signals are used to interrupt the server, so we catch them here
 	termSignalChan := make(chan os.Signal, 1)
 	signal.Notify(termSignalChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
-	serverStopChan := make(chan interface{}, 1)
+	serverStopChan := make(chan struct{}, 1)
 	go func() {
-		interruptSignal := <-termSignalChan
+		<-termSignalChan
+		interruptSignal := struct{}{}
 		serverStopChan <- interruptSignal
 	}()
 	if err := server.RunUntilStopped(serverStopChan); err != nil {
@@ -48,7 +49,7 @@ func (server MinimalGRPCServer) RunUntilInterrupted() error {
 }
 
 // Runs the server synchronously until a signal is received on the given channel
-func (server MinimalGRPCServer) RunUntilStopped(stopper <-chan interface{}) error {
+func (server MinimalGRPCServer) RunUntilStopped(stopper <-chan struct{}) error {
 	loggingInterceptorFunc := func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		grpcMethod := info.FullMethod
 		logrus.Debugf("Received gRPC request to method '%v' with args:\n%+v", grpcMethod, req)
