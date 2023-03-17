@@ -149,26 +149,26 @@ func (server MinimalGRPCServer) RunUntilStopped(stopper <-chan struct{}) error {
 
 func (server MinimalGRPCServer) loadTlsCredentials() credentials.TransportCredentials {
 	if server.serverCert == nil {
+		// No certificate provided, will use HTTP
 		return nil
 	}
-	var tlsConfig *tls.Config
 	if server.certPool == nil {
 		// with no cert pool, 1 way SSL will be enabled, no need for CA
-		tlsConfig = &tls.Config{
+		tlsConfig := &tls.Config{
 			Certificates: []tls.Certificate{
 				*server.serverCert,
 			},
 			ClientAuth: tls.NoClientCert,
 		}
-	} else {
-		// 2 ways SSL enabled - Load CA and set ClientAuth to "Require And Verify"
-		tlsConfig = &tls.Config{
-			Certificates: []tls.Certificate{
-				*server.serverCert,
-			},
-			ClientAuth: tls.RequireAndVerifyClientCert,
-			ClientCAs:  server.certPool,
-		}
+		return credentials.NewTLS(tlsConfig)
+	}
+	// 2 ways SSL enabled - Load CA and set ClientAuth to "Require And Verify"
+	tlsConfig := &tls.Config{
+		Certificates: []tls.Certificate{
+			*server.serverCert,
+		},
+		ClientAuth: tls.RequireAndVerifyClientCert,
+		ClientCAs:  server.certPool,
 	}
 	return credentials.NewTLS(tlsConfig)
 }
