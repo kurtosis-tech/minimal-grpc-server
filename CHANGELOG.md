@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.1](https://github.com/kurtosis-tech/minimal-grpc-server/compare/0.7.0...0.7.1) (2023-03-17)
+
+
+### Features
+
+* Add possibility to enable HTTPS on GRPC server ([#35](https://github.com/kurtosis-tech/minimal-grpc-server/issues/35)) ([4b160f0](https://github.com/kurtosis-tech/minimal-grpc-server/commit/4b160f0d17db8a7d952e9a5fc6c26251ea176cc2))
+
 ## [0.7.0](https://github.com/kurtosis-tech/minimal-grpc-server/compare/0.6.2...0.7.0) (2023-03-16)
 
 
