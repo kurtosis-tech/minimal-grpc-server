@@ -158,12 +158,12 @@ func (server MinimalGRPCServer) RunUntilStopped(stopper <-chan struct{}) error {
 	}()
 	select {
 	case <-serverStoppedChan:
-		logrus.Info("gRPC server has exited gracefully")
+		logrus.Debug("gRPC server has exited gracefully")
 	case <-time.After(server.stopGracePeriod):
 		logrus.Warnf("gRPC server failed to stop gracefully after %v; hard-stopping now...", server.stopGracePeriod)
 		grpcServer.Stop()
 		mux.Close()
-		logrus.Info("gRPC server was forcefully stopped")
+		logrus.Debug("gRPC server was forcefully stopped")
 	}
 
 	if err := <-grpcServerResultChan; err != nil {
