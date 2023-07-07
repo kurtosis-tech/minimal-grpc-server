@@ -116,7 +116,7 @@ func (server MinimalGRPCServer) RunUntilStopped(stopper <-chan struct{}) error {
 		)
 	}
 
-	grpcServerResultChan := make(chan error)
+	maybeErrorResultChan := make(chan error)
 	mux := cmux.New(listener)
 	grpcWebL := mux.Match(cmux.HTTP1Fast())
 	grpcL := mux.Match(cmux.Any())
@@ -124,28 +124,26 @@ func (server MinimalGRPCServer) RunUntilStopped(stopper <-chan struct{}) error {
 	go func() {
 		if resultErr := grpcServer.Serve(grpcL); resultErr != nil {
 			logrus.Debugf("error ocurred while creating grpc server: %v", resultErr)
-			grpcServerResultChan <- resultErr
+			maybeErrorResultChan <- resultErr
 		}
-	}()
 
-	// grpcweb is a proxy which enables ui to make requests to grpc server using kurtosis-sdk
-	// it converts http/1 request to http/2 and vice-versa under the hood
-	grpcWebServer := grpcweb.WrapServer(grpcServer, grpcweb.WithOriginFunc(func(origin string) bool { return true }))
-	httpServer := &http.Server{
-		Handler: http.Handler(grpcWebServer),
-	}
+		// grpcweb is a proxy which enables ui to make requests to grpc server using kurtosis-sdk
+		// it converts http/1 request to http/2 and vice-versa under the hood
+		grpcWebServer := grpcweb.WrapServer(grpcServer, grpcweb.WithOriginFunc(func(origin string) bool { return true }))
 
-	go func() {
+		httpServer := &http.Server{
+			Handler: http.Handler(grpcWebServer),
+		}
 		if resultErr := httpServer.Serve(grpcWebL); resultErr != nil {
 			logrus.Debugf("error ocurred while creating grpcweb server: %v", resultErr)
-			grpcServerResultChan <- resultErr
+			maybeErrorResultChan <- resultErr
 		}
 	}()
-
+	
 	go func() {
 		if resultErr := mux.Serve(); resultErr != nil {
 			logrus.Debugf("error ocurred while creating mux server: %v", resultErr)
-			grpcServerResultChan <- resultErr
+			maybeErrorResultChan <- resultErr
 		}
 	}()
 
@@ -168,7 +166,7 @@ func (server MinimalGRPCServer) RunUntilStopped(stopper <-chan struct{}) error {
 		logrus.Debug("gRPC server was forcefully stopped")
 	}
 
-	if err := <-grpcServerResultChan; err != nil {
+	if err := <-maybeErrorResultChan; err != nil {
 		// Technically this doesn't need to be an error, but we make it so to fail loudly
 		// this is expected behaviour observed via cmux
 		gracefulExit := isGracefulExit(err)
