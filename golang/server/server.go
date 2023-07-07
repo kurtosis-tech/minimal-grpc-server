@@ -118,11 +118,11 @@ func (server MinimalGRPCServer) RunUntilStopped(stopper <-chan struct{}) error {
 
 	maybeErrorResultChan := make(chan error)
 	mux := cmux.New(listener)
-	grpcWebL := mux.Match(cmux.HTTP1Fast())
-	grpcL := mux.Match(cmux.Any())
+	grpcWebListener := mux.Match(cmux.HTTP1Fast())
+	grpcListener := mux.Match(cmux.Any())
 
 	go func() {
-		if resultErr := grpcServer.Serve(grpcL); resultErr != nil {
+		if resultErr := grpcServer.Serve(grpcListener); resultErr != nil {
 			logrus.Debugf("error ocurred while creating grpc server: %v", resultErr)
 			maybeErrorResultChan <- resultErr
 		}
@@ -134,12 +134,12 @@ func (server MinimalGRPCServer) RunUntilStopped(stopper <-chan struct{}) error {
 		httpServer := &http.Server{
 			Handler: http.Handler(grpcWebServer),
 		}
-		if resultErr := httpServer.Serve(grpcWebL); resultErr != nil {
+		if resultErr := httpServer.Serve(grpcWebListener); resultErr != nil {
 			logrus.Debugf("error ocurred while creating grpcweb server: %v", resultErr)
 			maybeErrorResultChan <- resultErr
 		}
 	}()
-	
+
 	go func() {
 		if resultErr := mux.Serve(); resultErr != nil {
 			logrus.Debugf("error ocurred while creating mux server: %v", resultErr)
@@ -203,6 +203,8 @@ func (server MinimalGRPCServer) loadTlsCredentials() credentials.TransportCreden
 	return credentials.NewTLS(tlsConfig)
 }
 
+// look at the comment below for more info
+//https://github.com/jaegertracing/jaeger/blob/main/cmd/query/app/server.go
 func isGracefulExit(err error) bool {
 	switch err {
 	case nil, http.ErrServerClosed, cmux.ErrListenerClosed, cmux.ErrServerClosed:
