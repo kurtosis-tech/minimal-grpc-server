@@ -122,30 +122,27 @@ func (server MinimalGRPCServer) RunUntilStopped(stopper <-chan struct{}) error {
 	grpcL := mux.Match(cmux.Any())
 
 	go func() {
-		resultErr := grpcServer.Serve(grpcL)
-		if resultErr != nil {
-			logrus.Errorf("error ocurred while creating grpc server: %v", resultErr)
+		if resultErr := grpcServer.Serve(grpcL); resultErr != nil {
+			logrus.Debugf("error ocurred while creating grpc server: %v", resultErr)
 			grpcServerResultChan <- resultErr
 		}
 	}()
 
 	grpcWebServer := grpcweb.WrapServer(grpcServer, grpcweb.WithOriginFunc(func(origin string) bool { return true }))
-	srv := &http.Server{
+	httpServer := &http.Server{
 		Handler: http.Handler(grpcWebServer),
 	}
 
 	go func() {
-		resultErr := srv.Serve(grpcWebL)
-		if resultErr != nil {
-			logrus.Errorf("error ocurred while creating grpcweb server: %v", resultErr)
+		if resultErr := httpServer.Serve(grpcWebL); resultErr != nil {
+			logrus.Debugf("error ocurred while creating grpcweb server: %v", resultErr)
 			grpcServerResultChan <- resultErr
 		}
 	}()
 
 	go func() {
-		resultErr := mux.Serve()
-		if resultErr != nil {
-			logrus.Errorf("error ocurred while creating mux server: %v", resultErr)
+		if resultErr := mux.Serve(); resultErr != nil {
+			logrus.Debugf("error ocurred while creating mux server: %v", resultErr)
 			grpcServerResultChan <- resultErr
 		}
 	}()
