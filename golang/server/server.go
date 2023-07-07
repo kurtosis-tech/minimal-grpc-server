@@ -128,6 +128,8 @@ func (server MinimalGRPCServer) RunUntilStopped(stopper <-chan struct{}) error {
 		}
 	}()
 
+	// grpcweb is a proxy which enables ui to make requests to grpc server using kurtosis-sdk
+	// it converts http/1 request to http/2 and vice-versa under the hood
 	grpcWebServer := grpcweb.WrapServer(grpcServer, grpcweb.WithOriginFunc(func(origin string) bool { return true }))
 	httpServer := &http.Server{
 		Handler: http.Handler(grpcWebServer),
