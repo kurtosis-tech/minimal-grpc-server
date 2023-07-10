@@ -5,13 +5,17 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/kurtosis-tech/stacktrace"
 	"github.com/sirupsen/logrus"
+	"github.com/soheilhy/cmux"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"net"
+	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 )
@@ -97,7 +101,6 @@ func (server MinimalGRPCServer) RunUntilStopped(stopper <-chan struct{}) error {
 		serverOptions = append(serverOptions, grpc.Creds(tlsCredentialsMaybe))
 	}
 	grpcServer := grpc.NewServer(serverOptions...)
-
 	for _, registrationFunc := range server.serviceRegistrationFuncs {
 		registrationFunc(grpcServer)
 	}
@@ -113,14 +116,37 @@ func (server MinimalGRPCServer) RunUntilStopped(stopper <-chan struct{}) error {
 		)
 	}
 
-	grpcServerResultChan := make(chan error)
+	maybeErrorResultChan := make(chan error)
+	mux := cmux.New(listener)
+	grpcWebListener := mux.Match(cmux.HTTP1Fast())
+	grpcListener := mux.Match(cmux.Any())
+
+	// grpcweb is a proxy which enables ui to make requests to grpc server using kurtosis-sdk
+	// it converts http/1 request to http/2 and vice-versa under the hood
+	grpcWebServer := grpcweb.WrapServer(grpcServer, grpcweb.WithOriginFunc(func(origin string) bool { return true }))
 
 	go func() {
-		var resultErr error = nil
-		if err := grpcServer.Serve(listener); err != nil {
-			resultErr = stacktrace.Propagate(err, "The gRPC server exited with an error")
+		if resultErr := grpcServer.Serve(grpcListener); resultErr != nil {
+			logrus.Debugf("error ocurred while creating grpc server: %v", resultErr)
+			maybeErrorResultChan <- resultErr
 		}
-		grpcServerResultChan <- resultErr
+	}()
+
+	go func() {
+		httpServer := &http.Server{
+			Handler: http.Handler(grpcWebServer),
+		}
+		if resultErr := httpServer.Serve(grpcWebListener); resultErr != nil {
+			logrus.Debugf("error ocurred while creating grpcweb server: %v", resultErr)
+			maybeErrorResultChan <- resultErr
+		}
+	}()
+
+	go func() {
+		if resultErr := mux.Serve(); resultErr != nil {
+			logrus.Debugf("error ocurred while creating mux server: %v", resultErr)
+			maybeErrorResultChan <- resultErr
+		}
 	}()
 
 	// Wait until we get a shutdown signal
@@ -128,7 +154,8 @@ func (server MinimalGRPCServer) RunUntilStopped(stopper <-chan struct{}) error {
 
 	serverStoppedChan := make(chan interface{})
 	go func() {
-		grpcServer.GracefulStop()
+		grpcServer.Stop()
+		mux.Close()
 		serverStoppedChan <- nil
 	}()
 	select {
@@ -137,16 +164,21 @@ func (server MinimalGRPCServer) RunUntilStopped(stopper <-chan struct{}) error {
 	case <-time.After(server.stopGracePeriod):
 		logrus.Warnf("gRPC server failed to stop gracefully after %v; hard-stopping now...", server.stopGracePeriod)
 		grpcServer.Stop()
+		mux.Close()
 		logrus.Debug("gRPC server was forcefully stopped")
 	}
-	if err := <-grpcServerResultChan; err != nil {
+
+	if err := <-maybeErrorResultChan; err != nil {
 		// Technically this doesn't need to be an error, but we make it so to fail loudly
-		return stacktrace.Propagate(err, "gRPC server returned an error after it was done serving")
+		// this is expected behaviour observed via cmux
+		gracefulExit := isGracefulExit(err)
+		if !gracefulExit {
+			return stacktrace.Propagate(err, "gRPC server returned an error after it was done serving")
+		}
 	}
 
 	return nil
 }
-
 func (server MinimalGRPCServer) loadTlsCredentials() credentials.TransportCredentials {
 	if server.serverCert == nil {
 		// No certificate provided, will use HTTP
@@ -171,4 +203,19 @@ func (server MinimalGRPCServer) loadTlsCredentials() credentials.TransportCreden
 		ClientCAs:  server.certPool,
 	}
 	return credentials.NewTLS(tlsConfig)
+}
+
+// look at the comment below for more info
+//https://github.com/jaegertracing/jaeger/blob/main/cmd/query/app/server.go
+func isGracefulExit(err error) bool {
+	switch err {
+	case nil, http.ErrServerClosed, cmux.ErrListenerClosed, cmux.ErrServerClosed:
+		// do nothing, normal exit
+		return true
+	default:
+		if strings.Contains(err.Error(), "use of closed network connection") {
+			return true
+		}
+		return false
+	}
 }
