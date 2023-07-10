@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.2](https://github.com/kurtosis-tech/minimal-grpc-server/compare/0.7.1...0.7.2) (2023-07-10)
+
+
+### Features
+
+* added grpcweb proxy that allows me to access grpc endpoints from the ui ([#39](https://github.com/kurtosis-tech/minimal-grpc-server/issues/39)) ([90b674a](https://github.com/kurtosis-tech/minimal-grpc-server/commit/90b674acb26995ddff5665918059aeff8db71797))
+
 ## [0.7.1](https://github.com/kurtosis-tech/minimal-grpc-server/compare/0.7.0...0.7.1) (2023-03-17)
 
 
