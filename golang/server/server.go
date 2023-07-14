@@ -105,7 +105,7 @@ func (server MinimalGRPCServer) RunUntilStopped(stopper <-chan struct{}) error {
 		registrationFunc(grpcServer)
 	}
 
-	listenAddressStr := fmt.Sprintf(":%v", server.listenPort)
+	listenAddressStr := fmt.Sprintf("0.0.0.0:%v", server.listenPort)
 	listener, err := net.Listen(listenProtocol, listenAddressStr)
 	if err != nil {
 		return stacktrace.Propagate(
