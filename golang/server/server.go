@@ -65,7 +65,7 @@ func NewMinimalHttpsGRPCServer(listenPort uint16, stopGracePeriod time.Duration,
 // 1. a signal channel notifying when the server has been interrupted
 // 2. an error channel which sends the error occurred meanwhile the server was starting
 func (server MinimalGRPCServer) RunUntilInterruptedAsync() (<-chan struct{}, <-chan error) {
-	errChan := make(chan error)
+	errChan := make(chan error, 1) //it's buffered because it shouldn't block the flow
 	serverIsInterruptedChan := make(chan struct{})
 
 	go func() {
@@ -74,6 +74,7 @@ func (server MinimalGRPCServer) RunUntilInterruptedAsync() (<-chan struct{}, <-c
 		if err := server.RunUntilInterrupted(); err != nil {
 			errChan <- stacktrace.Propagate(err, "An error occurred running the server until it is interrupted")
 		}
+		serverIsInterruptedChan <- struct{}{}
 	}()
 
 	return serverIsInterruptedChan, errChan
