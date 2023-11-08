@@ -62,26 +62,29 @@ func NewMinimalHttpsGRPCServer(listenPort uint16, stopGracePeriod time.Duration,
 }
 
 // RunUntilInterruptedAsync runs the server asynchronously until an interrupt signal is received, it returns:
-// 1. a signal channel notifying when the server has been interrupted
-// 2. an error channel which sends the error occurred meanwhile the server was starting
-func (server MinimalGRPCServer) RunUntilInterruptedAsync() (<-chan struct{}, <-chan error) {
+// 1. a signal channel notifying when the server has started
+// 2. a signal channel notifying when the server has been interrupted
+// 3. an error channel which sends the error occurred meanwhile the server was starting
+func (server MinimalGRPCServer) RunUntilInterruptedAsync() (<-chan struct{}, <-chan struct{}, <-chan error) {
 	errChan := make(chan error, 1) //it's buffered because it shouldn't block the flow
 	serverIsInterruptedChan := make(chan struct{})
+	serverStartedChan := make(chan struct{}, 1) //it's buffered because it shouldn't block the flow
 
 	go func() {
 		defer close(serverIsInterruptedChan)
 		defer close(errChan)
-		if err := server.RunUntilInterrupted(); err != nil {
+		if err := server.RunUntilInterrupted(serverStartedChan); err != nil {
 			errChan <- stacktrace.Propagate(err, "An error occurred running the server until it is interrupted")
 		}
 		serverIsInterruptedChan <- struct{}{}
 	}()
 
-	return serverIsInterruptedChan, errChan
+	return serverStartedChan, serverIsInterruptedChan, errChan
 }
 
 // RunUntilInterrupted runs the server synchronously until an interrupt signal is received
-func (server MinimalGRPCServer) RunUntilInterrupted() error {
+// it receives serverStartedChan signal channel which is used to notify when the server has started
+func (server MinimalGRPCServer) RunUntilInterrupted(serverStartedChan chan<- struct{}) error {
 	// Signals are used to interrupt the server, so we catch them here
 	termSignalChan := make(chan os.Signal, 1)
 	signal.Notify(termSignalChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
@@ -91,14 +94,15 @@ func (server MinimalGRPCServer) RunUntilInterrupted() error {
 		interruptSignal := struct{}{}
 		serverStopChan <- interruptSignal
 	}()
-	if err := server.RunUntilStopped(serverStopChan); err != nil {
+	if err := server.RunUntilStopped(serverStopChan, serverStartedChan); err != nil {
 		return stacktrace.Propagate(err, "An error occurred running the server using the interrupt channel for stopping")
 	}
 	return nil
 }
 
-// RunUntilStopped runs the server synchronously until a signal is received on the given channel
-func (server MinimalGRPCServer) RunUntilStopped(stopper <-chan struct{}) error {
+// RunUntilStopped runs the server synchronously until a signal is received on the stopper channel
+// it receives serverStartedChan signal channel which is used to notify when the server has started
+func (server MinimalGRPCServer) RunUntilStopped(stopper <-chan struct{}, serverStartedChan chan<- struct{}) error {
 	loggingInterceptorFunc := func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		grpcMethod := info.FullMethod
 		logrus.Debugf("Received gRPC request to method '%v' with args:\n%+v", grpcMethod, req)
@@ -167,6 +171,9 @@ func (server MinimalGRPCServer) RunUntilStopped(stopper <-chan struct{}) error {
 			maybeErrorResultChan <- resultErr
 		}
 	}()
+
+	// Notify that the server has started
+	serverStartedChan <- struct{}{}
 
 	// Wait until we get a shutdown signal
 	<-stopper
