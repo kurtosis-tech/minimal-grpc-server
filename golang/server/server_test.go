@@ -16,9 +16,10 @@ func TestManualShutdown(t *testing.T) {
 	server := NewMinimalGRPCServer(listenPort, stopGracePeriod, []func(*grpc.Server){})
 
 	stopChan := make(chan struct{})
+	serverStartedChan := make(chan struct{})
 	runResultChan := make(chan error)
 	go func() {
-		runResultChan <- server.RunUntilStopped(stopChan)
+		runResultChan <- server.RunUntilStopped(stopChan, serverStartedChan)
 	}()
 	select {
 	case err := <-runResultChan:
